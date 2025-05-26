@@ -1,20 +1,28 @@
-require("dotenv").config();
-const { App } = require("@slack/bolt");
-const { OpenAI } = require("openai");
+import dotenv from "dotenv";
+dotenv.config();
+import Slack from "@slack/bolt";
+import { OpenAI } from "openai";
+import { readFileSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+const SlackClient = Slack.App;
 
-const USER_PROMPT = fs.readFileSync(
-  path.join(__dirname, "prompts", "user.txt"),
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const USER_PROMPT = readFileSync(
+  join(__dirname, "prompts", "user.txt"),
   "utf8"
 );
 
-const SYSTEM_PROMPT = fs.readFileSync(
-  path.join(__dirname, "prompts", "system.txt"),
+const SYSTEM_PROMPT = readFileSync(
+  join(__dirname, "prompts", "system.txt"),
   "utf8"
 );
 
 const CHANNEL_NAME = "offsite-hackathon-team12";
 
-const slackClient = new App({
+const slackClient = new SlackClient({
   token: process.env.SLACK_BOT_TOKEN,
   signingSecret: process.env.SLACK_SIGNING_SECRET,
   socketMode: true,
@@ -61,9 +69,9 @@ let joinedChannelId;
         token: process.env.SLACK_BOT_TOKEN,
         channel: channel.id,
       });
-      console.log(`Joined #${channelName}`);
+      console.log(`Joined #${CHANNEL_NAME}`);
     } else {
-      console.error(`Channel #${channelName} not found.`);
+      console.error(`Channel #${CHANNEL_NAME} not found.`);
     }
   } catch (error) {
     console.error("Error joining channel:", error);

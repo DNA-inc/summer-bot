@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A Slack bot that summarizes links using OpenAI APIs.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
