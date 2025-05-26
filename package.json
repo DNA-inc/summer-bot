@@ -1,0 +1,16 @@
+{
+  "name": "slack-link-summarizer-bot",
+  "version": "1.0.0",
+  "description": "A Slack bot that summarizes links using OpenAI APIs.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@slack/bolt": "^3.15.0",
+    "openai": "^4.20.0",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "cheerio": "^1.0.0-rc.12"
+  }
+}
