@@ -115,13 +115,39 @@ let joinedChannelId;
 
         const summary = completion.choices[0].message.content.trim();
 
+        // Post summary in thread
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
           text: `${summary}`,
         });
+
+        // Add to Canvas
+        try {
+          await client.apiCall("canvases.edit", {
+            canvas_id: "F08UDARNE8H",
+            changes: [
+              {
+                operation: "insert_at_end",
+                document_content: {
+                  type: "markdown",
+                  markdown: `*Link:* <${url}>\n*Summary:* ${summary}\n_Shared by <@${
+                    event.user
+                  }> on ${new Date().toLocaleDateString()}_\n---`,
+                },
+              },
+            ],
+          });
+        } catch (canvasErr) {
+          console.error("Error updating Canvas:", JSON.stringify(canvasErr));
+          await client.chat.postMessage({
+            channel: event.channel,
+            thread_ts: event.ts,
+            text: "Sorry, I couldn't add the summary to the Canvas due to an error.",
+          });
+        }
       } catch (err) {
-        console.log(err);
+        console.error(err);
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
