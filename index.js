@@ -1,7 +1,18 @@
 require("dotenv").config();
 const { App } = require("@slack/bolt");
 const { OpenAI } = require("openai");
-// Add SLACK_APP_TOKEN to your .env for Socket Mode
+
+const USER_PROMPT = fs.readFileSync(
+  path.join(__dirname, "prompts", "user.txt"),
+  "utf8"
+);
+
+const SYSTEM_PROMPT = fs.readFileSync(
+  path.join(__dirname, "prompts", "system.txt"),
+  "utf8"
+);
+
+const CHANNEL_NAME = "offsite-hackathon-team12";
 
 const slackClient = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -28,7 +39,6 @@ let joinedChannelId;
   console.log("⚡️ Slack link summarizer bot is running!");
 
   // Join #offsite-hackathon-team12 on startup
-  const channelName = "offsite-hackathon-team12";
   try {
     let allChannels = [];
 
@@ -44,7 +54,7 @@ let joinedChannelId;
       cursor = result.response_metadata && result.response_metadata.next_cursor;
     } while (cursor);
 
-    const channel = allChannels.find((c) => c.name === channelName);
+    const channel = allChannels.find((c) => c.name === CHANNEL_NAME);
     if (channel) {
       joinedChannelId = channel.id;
       await slackClient.client.conversations.join({
@@ -85,18 +95,18 @@ let joinedChannelId;
           messages: [
             {
               role: "system",
-              content:
-                "You are a helpful assistant that summarizes web pages for Slack users.",
+              content: SYSTEM_PROMPT,
             },
             {
               role: "user",
-              content: `Summarize the content of this web page for a Slack channel: ${url} — make it short and concise, one paragraph`,
+              content: USER_PROMPT,
             },
           ],
           max_tokens: 300,
         });
 
         const summary = completion.choices[0].message.content.trim();
+
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
