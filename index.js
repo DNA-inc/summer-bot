@@ -107,7 +107,7 @@ let joinedChannelId;
             },
             {
               role: "user",
-              content: USER_PROMPT,
+              content: USER_PROMPT.replace("{url}", url),
             },
           ],
           max_tokens: 300,
@@ -118,9 +118,10 @@ let joinedChannelId;
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
-          text: `Summary of <${url}>:\n${summary}`,
+          text: `${summary}`,
         });
       } catch (err) {
+        console.log(err);
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,

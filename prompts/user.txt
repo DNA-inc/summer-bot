@@ -1,1 +1,1 @@
-Summarize the content of this web page for a Slack channel: ${url} — make it short and concise, one paragraph
+Summarize the content of this web page for a Slack channel: {url} — make it short and concise, one paragraph, do not include link in the summary
