@@ -43,24 +43,29 @@ function extractUrls(text) {
 // Store the channel ID after joining
 let joinedChannelId;
 
+// Store mapping from thread_ts to last inserted section_id
+const threadToSectionId = new Map();
+
 (async () => {
   await slackClient.start(process.env.PORT || 3000);
   console.log("⚡️ Slack link summarizer bot is running!");
 
   // Join #offsite-hackathon-team12 on startup
   try {
-    let allChannels = [];
+    const allChannels = [];
 
     let cursor;
     do {
-      const result = await slackClient.client.conversations.list({
+      const conversations = await slackClient.client.conversations.list({
         token: process.env.SLACK_BOT_TOKEN,
         types: "public_channel,private_channel",
         cursor,
         limit: 1000,
       });
-      allChannels = allChannels.concat(result.channels);
-      cursor = result.response_metadata && result.response_metadata.next_cursor;
+      allChannels.push(...conversations.channels);
+      cursor =
+        conversations.response_metadata &&
+        conversations.response_metadata.next_cursor;
     } while (cursor);
 
     const channel = allChannels.find((c) => c.name === CHANNEL_NAME);
@@ -86,31 +91,78 @@ let joinedChannelId;
       reaction: event.reaction,
       channel: event.item.channel,
       ts: event.item.ts,
-      user: event.user
+      user: event.user,
     });
-    
+
     try {
-      // Get the specific message that was reacted to using conversations.replies
-      const result = await client.conversations.replies({
+      // Retrieve the message that was reacted to
+      const reactedMessageResp = await client.conversations.replies({
         channel: event.item.channel,
         ts: event.item.ts,
-        limit: 1
+        limit: 1,
       });
-      
-      if (!result.messages || result.messages.length === 0) {
+      if (
+        !reactedMessageResp.messages ||
+        reactedMessageResp.messages.length === 0
+      ) {
         console.log("Could not find the message that was reacted to");
         return;
       }
-      
-      const message = result.messages[0];
-      
+      const reactedMessage = reactedMessageResp.messages[0];
+
+      // Determine the thread root ts
+      const threadRootTs = reactedMessage.thread_ts || reactedMessage.ts;
+
+      // Fetch the first message of the thread (the thread root)
+      const threadRepliesResp = await client.conversations.replies({
+        channel: event.item.channel,
+        ts: threadRootTs,
+        limit: 1,
+      });
+      if (
+        !threadRepliesResp.messages ||
+        threadRepliesResp.messages.length === 0
+      ) {
+        console.log("Could not find the thread root message");
+        return;
+      }
+      const threadMessage = threadRepliesResp.messages[0];
+      console.log("threadMessage", threadMessage);
+
+      const originalPoster = threadMessage.user;
+
       // Check if the reacted message was from our bot
-      if (message.bot_id) {
-        console.log("Message is from a bot with ID:", message.bot_id);
+      if (reactedMessage.bot_id) {
+        console.log("Message is from a bot with ID:", reactedMessage.bot_id);
         if (event.reaction === "+1") {
-          console.log("👍 Thumbs up received - Adding link to canvas");
+          console.log("👍 Thumbs up received");
         } else if (event.reaction === "-1") {
-          console.log("👎 Thumbs down received - Doing nothing");
+          if (event.user !== originalPoster) {
+            console.log(
+              "Reaction is from a user other than the original poster, ignoring",
+              event.user,
+              originalPoster
+            );
+            return;
+          }
+          console.log("👎 Thumbs down received - Undoing link from canvas");
+
+          // Find the section_id for this thread
+          const sectionId = threadToSectionId.get(threadRootTs);
+          if (sectionId) {
+            await client.apiCall("canvases.edit", {
+              canvas_id: "F08UDARNE8H",
+              changes: [
+                {
+                  operation: "delete",
+                  section_id: sectionId,
+                },
+              ],
+            });
+            threadToSectionId.delete(threadRootTs);
+          } else {
+            console.log("No section_id found for this thread, cannot undo");
+          }
         } else {
           console.log("Other reaction received:", event.reaction);
         }
@@ -169,9 +221,7 @@ let joinedChannelId;
         try {
           await client.apiCall("canvases.edit", {
             canvas_id: "F08UDARNE8H",
-            criteria: {
-              section_type: "markdown",
-            },
+            criteria: {},
             changes: [
               {
                 operation: "insert_at_end",
@@ -186,6 +236,22 @@ let joinedChannelId;
               },
             ],
           });
+
+          // Lookup the last section to get its section_id
+          const sectionsResp = await client.apiCall(
+            "canvases.sections.lookup",
+            {
+              criteria: {},
+              canvas_id: "F08UDARNE8H",
+            }
+          );
+
+          if (sectionsResp.sections && sectionsResp.sections.length > 0) {
+            // Assume the last section is the one we just added
+            const lastSection =
+              sectionsResp.sections[sectionsResp.sections.length - 1];
+            threadToSectionId.set(event.ts, lastSection.section_id);
+          }
 
           await client.chat.postMessage({
             channel: event.channel,
@@ -205,7 +271,7 @@ let joinedChannelId;
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
-          text: `😕 I couldn’t access that link. It might be behind a login, or the site’s down. Want to try a different one?`,
+          text: `😕 I couldn't access that link. It might be behind a login, or the site's down. Want to try a different one?`,
         });
       }
     }
