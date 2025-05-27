@@ -136,6 +136,12 @@ let joinedChannelId;
               },
             ],
           });
+
+          await client.chat.postMessage({
+            channel: event.channel,
+            thread_ts: event.ts,
+            text: "📌 Saved to the Links canvas!",
+          });
         } catch (canvasErr) {
           console.error("Error updating Canvas:", JSON.stringify(canvasErr));
           await client.chat.postMessage({
