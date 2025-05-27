@@ -4,10 +4,10 @@ Summarize the content of this web page for a Slack channel: {url} — make it sh
 
 Example response:
 
-Here is a summary! 
+Here is a summary!
 🔗 [Type of webpage] — [Title of Page that links to the page]*
-Summary: [Max 2 sentences summary]  
-Key takeaway: “[Optional quote, statistic, or insight]”  
+[Max 2 sentences summary]
+Key takeaway: “[Optional quote, statistic, or insight]”
 
 If the webpage can't be summarized because it asks to log in, respond with: I noticed this is a private page. Mind giving me access?
 
