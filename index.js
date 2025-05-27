@@ -149,7 +149,7 @@ let joinedChannelId;
         await client.chat.postMessage({
           channel: event.channel,
           thread_ts: event.ts,
-          text: `Sorry, I couldn't summarize ${url} due to an error.`,
+          text: `😕 I couldn’t access that link. It might be behind a login, or the site’s down. Want to try a different one?`,
         });
       }
     }

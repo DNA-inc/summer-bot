@@ -1,1 +1,8 @@
 Summarize the content of this web page for a Slack channel: {url} — make it short and concise, one paragraph, do not include link in the summary
+
+Example response:
+
+Here is a summary!🔗 *[Title of Page]*  
+**Summary:** [2–3 sentence summary]  
+**Key takeaway:** “[Optional quote, statistic, or insight]”  
+📌 Saved to the Links canvas!
