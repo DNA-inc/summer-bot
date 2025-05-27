@@ -79,9 +79,51 @@ let joinedChannelId;
 
   console.log("Waiting for messages...");
 
+  // Listen for reactions to bot messages
+  slackClient.event("reaction_added", async ({ event, client }) => {
+    console.log("Reaction received:", {
+      reaction: event.reaction,
+      channel: event.item.channel,
+      ts: event.item.ts,
+      user: event.user
+    });
+    
+    try {
+      // Get the specific message that was reacted to using conversations.replies
+      const result = await client.conversations.replies({
+        channel: event.item.channel,
+        ts: event.item.ts,
+        limit: 1
+      });
+      
+      if (!result.messages || result.messages.length === 0) {
+        console.log("Could not find the message that was reacted to");
+        return;
+      }
+      
+      const message = result.messages[0];
+      
+      // Check if the reacted message was from our bot
+      if (message.bot_id) {
+        console.log("Message is from a bot with ID:", message.bot_id);
+        if (event.reaction === "+1") {
+          console.log("👍 Thumbs up received - Adding link to canvas");
+        } else if (event.reaction === "-1") {
+          console.log("👎 Thumbs down received - Doing nothing");
+        } else {
+          console.log("Other reaction received:", event.reaction);
+        }
+      } else {
+        console.log("Message is not from our bot - ignoring reaction");
+      }
+    } catch (error) {
+      console.error("Error handling reaction:", error);
+    }
+  });
+
   // Listen for messages in the joined channel
   slackClient.event("message", async ({ event, client, context }) => {
-    console.log("Message seen in channel:", event);
+    // console.log("Message seen in channel:", event);
     // Only respond to messages in the joined channel, not from bots
     if (
       !joinedChannelId ||
