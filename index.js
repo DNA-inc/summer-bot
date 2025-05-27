@@ -131,9 +131,7 @@ let joinedChannelId;
                 operation: "insert_at_end",
                 document_content: {
                   type: "markdown",
-                  markdown: `*Link:* <${url}>\n*Summary:* ${summary}\n_Shared by <@${
-                    event.user
-                  }> on ${new Date().toLocaleDateString()}_\n---`,
+                  markdown: `${url}\n${summary}\n (by @${event.user})`,
                 },
               },
             ],
