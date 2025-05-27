@@ -169,6 +169,9 @@ let joinedChannelId;
         try {
           await client.apiCall("canvases.edit", {
             canvas_id: "F08UDARNE8H",
+            criteria: {
+              section_type: "markdown",
+            },
             changes: [
               {
                 operation: "insert_at_end",
