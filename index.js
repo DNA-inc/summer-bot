@@ -35,7 +35,8 @@ const openai = new OpenAI({
 
 // Helper to extract URLs from text
 function extractUrls(text) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urlRegex =
+    /\b(?:https?:\/\/|www\.)[^\s<>"']+|(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(?:\/[^\s<>"']*)?/g;
   return text.match(urlRegex) || [];
 }
 
@@ -173,7 +174,11 @@ let joinedChannelId;
                 operation: "insert_at_end",
                 document_content: {
                   type: "markdown",
-                  markdown: `${url}\n${summary}\n (by @${event.user})`,
+                  markdown:
+                    "## Link: [{url}]({url}) \n**Shared by** <@{user}> \n\n {summary}"
+                      .replace("{summary}", summary)
+                      .replace("{user}", event.user)
+                      .replaceAll("{url}", url),
                 },
               },
             ],
