@@ -221,7 +221,6 @@ const threadToSectionId = new Map();
         try {
           await client.apiCall("canvases.edit", {
             canvas_id: "F08UDARNE8H",
-            criteria: {},
             changes: [
               {
                 operation: "insert_at_end",
@@ -241,7 +240,10 @@ const threadToSectionId = new Map();
           const sectionsResp = await client.apiCall(
             "canvases.sections.lookup",
             {
-              criteria: {},
+              criteria: {
+                section_types: ["any_header"],
+                contains_text: "Link",
+              },
               canvas_id: "F08UDARNE8H",
             }
           );
